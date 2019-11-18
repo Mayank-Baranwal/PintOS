@@ -1,0 +1,20 @@
+Week 4:
+
+Session 1:
+Start date: 		2019 09 08 19 00
+Members Present:	Udbhav Chugh, Mayank Baranwal, Tushar Bhutada, Aman Raj, Kartik Gupta
+Aim: 			Partially Completed
+Duration: 		3 hours
+Files affected: 	process.c
+Functions affected: 	setup_stack()
+Lines of code:		15-20
+
+
+Session 2:
+Start date: 		2019 09 10 17 00
+Members Present: 	Udbhav Chugh, Mayank Baranwal, Tushar Bhutada, Aman Raj, Kartik Gupta
+Aim: 			Completed user program 01
+Duration: 		6 hours
+Files affected: 	process.c
+Functions affected: 	load(), test_stack()
+Lines of code:	 	40-50

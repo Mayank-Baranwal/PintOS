@@ -3,7 +3,9 @@
 
 #include <debug.h>
 #include <list.h>
+#include "threads/synch.h"
 #include <stdint.h>
+#include "vm/page.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -23,6 +25,8 @@ typedef int tid_t;
 #define PRI_MIN 0                       /* Lowest priority. */
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
+
+#define MAX_FILES 128 
 
 /* A kernel thread or user process.
    Each thread structure is stored in its own 4 kB page.  The
@@ -99,7 +103,24 @@ struct thread
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
-    struct list locks_acquired;         /* List of locks acquired by a thread */
+    /* All Locks acquired */
+    struct list locks_acquired;
+   
+    bool no_yield;
+
+    struct list_elem parent_elem;
+    struct thread *parent;              
+    struct list children;               
+    struct file *executable_file;
+    struct file *files[MAX_FILES];
+    struct spt_entry *mmap_files[MAX_FILES];
+
+    struct hash supp_page_table;
+    struct semaphore sema_ready;
+    struct semaphore sema_terminated;
+    int return_status;
+    bool load_complete;
+    struct semaphore sema_ack;
   };
 
 /* If false (default), use round-robin scheduler.
@@ -126,17 +147,14 @@ const char *thread_name (void);
 void thread_exit (void) NO_RETURN;
 void thread_yield (void);
 
-/* Performs some operation on thread t, given auxiliary data AUX. */
-typedef void thread_action_func (struct thread *t, void *aux);
-void thread_foreach (thread_action_func *, void *);
+
 
 int thread_get_priority (void);
 void thread_set_priority (int);
 
-int thread_get_nice (void);
-void thread_set_nice (int);
-int thread_get_recent_cpu (void);
-int thread_get_load_avg (void);
+/* Performs some operation on thread t, given auxiliary data AUX. */
+typedef void thread_action_func (struct thread *t, void *aux);
+void thread_foreach (thread_action_func *, void *);
 
 
 //Task 1 subtask 01 function declarations
@@ -160,4 +178,19 @@ void thread_update_priority (struct thread *);
 void thread_update_recent_cpu (struct thread *);
 void thread_update_load_avg (void);
 bool ready_cmp_mlfqs (const struct list_elem*, const struct list_elem*, void*);
+
+//UP04 function declarations
+struct thread *get_child_thread_from_id (int);
+
+
+int thread_get_nice (void);
+void thread_set_nice (int);
+int thread_get_recent_cpu (void);
+int thread_get_load_avg (void);
+
+
+
+
+
+
 #endif /* threads/thread.h */

@@ -102,6 +102,7 @@ void
 sema_up (struct semaphore *sema) 
 {
   enum intr_level old_level;
+  struct thread *t = NULL;
 
   ASSERT (sema != NULL);
 
@@ -111,7 +112,8 @@ sema_up (struct semaphore *sema)
   {
     struct list_elem *min_elem = list_min (&sema->waiters, sema_priority, NULL);
     list_remove (min_elem);
-    thread_unblock (list_entry (min_elem, struct thread, elem));
+    t= list_entry (min_elem, struct thread, elem);
+    thread_unblock (t);
 
     /*
       thread_unblock (list_entry (list_pop_front (&sema->waiters),
@@ -123,7 +125,19 @@ sema_up (struct semaphore *sema)
 
   /* The thread unblocked might have higher priority than the current thread.
      We yield to that thread in this case. */
-  thread_yield();
+  //thread_yield();
+  struct thread *cur = thread_current ();
+
+  if (t == NULL || cur->no_yield == true)
+      cur->no_yield = false;
+  else
+  {
+    if (intr_context ())
+      intr_yield_on_return ();
+    else
+      thread_yield ();
+  }
+  
 
 }
 
@@ -317,15 +331,12 @@ cond_cmp (struct list_elem *a, struct list_elem *b, void *aux UNUSED)
 {
   struct semaphore_elem *mfirst = list_entry (a, struct semaphore_elem, elem);
   struct semaphore_elem *msecond = list_entry (b, struct semaphore_elem, elem);
-
   struct list_elem *lfirst = list_front (&(mfirst->semaphore.waiters));
   struct list_elem *lsecond = list_front (&(msecond->semaphore.waiters));
-
   struct thread *first = list_entry (lfirst, struct thread, elem);
   struct thread *second = list_entry (lsecond, struct thread, elem);
 
   if(!thread_mlfqs) return thread_get_priority_effective (first) > thread_get_priority_effective (second);
-
 return first->priority > second->priority;
 }
 

@@ -91,7 +91,7 @@ main (void)
   palloc_init ();
   malloc_init ();
   paging_init ();
-
+  frame_table_init ();
   /* Segmentation. */
 #ifdef USERPROG
   tss_init ();
@@ -118,7 +118,7 @@ main (void)
   disk_init ();
   filesys_init (format_filesys);
 #endif
-
+  swap_init ();
   printf ("Boot complete.\n");
   
   /* Run actions specified on kernel command line. */
@@ -282,7 +282,17 @@ run_task (char **argv)
   
   printf ("Executing '%s':\n", task);
 #ifdef USERPROG
-  process_wait (process_execute (task));
+  tid_t tid = process_execute (task);
+  struct thread *child = get_child_thread_from_id (tid);
+
+  // RUN IF THE THREAD HAS A CHILD! //
+  if (child != NULL)
+  {
+    //sema_down (&child->sema_ready);
+    sema_up (&child->sema_ack);
+  }
+
+  process_wait (tid);
 #else
   run_test (task);
 #endif
@@ -422,7 +432,7 @@ power_off (void)
 #ifdef FILESYS
   filesys_done ();
 #endif
-
+  swap_end();
   print_stats ();
 
   printf ("Powering off...\n");
